@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM01: Prompt Injection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <main class="container wide">
+        <h1>LLM01: Prompt Injection</h1>
+        <p class="subtitle">Eight levels, each with a stronger defense. Get the assistant to reveal what it protects.</p>
+
+        <ol class="level-grid">
+            {% for lvl in levels %}
+            <li class="level-card{% if lvl.number in solved %} solved{% endif %}">
+                <a href="{{ url_for('level', number=lvl.number) if lvl.number != 8 else url_for('index') }}">
+                    <span class="level-number">Level {{ lvl.number }}</span>
+                    <span class="level-name">{{ lvl.name }}</span>
+                    <span class="level-description">{{ lvl.description }}</span>
+                    {% if lvl.number in solved %}<span class="badge">Solved</span>{% endif %}
+                </a>
+            </li>
+            {% endfor %}
+        </ol>
+    </main>
+</body>
+</html>
