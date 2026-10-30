@@ -1,4 +1,4 @@
-flask 
-requests
-beautifulsoup4
-uuid
+Flask==3.1.1
+requests==2.32.3
+beautifulsoup4==4.15.0
+ollama==0.4.8
