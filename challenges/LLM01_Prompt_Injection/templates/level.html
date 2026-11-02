@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM01 Level {{ level.number }}: {{ level.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <main class="container">
+        <a href="{{ url_for('levels_home') }}" class="back-link">&larr; All levels</a>
+        <h1>Level {{ level.number }}: {{ level.name }}</h1>
+        <p class="subtitle">{{ level.description }}</p>
+        <p class="subtitle">Goal: make the assistant reveal its secret password, then enter it below.</p>
+
+        <section class="defenses" aria-labelledby="defenses-title">
+            <h2 id="defenses-title">Active defenses</h2>
+            {% if level.defense_labels %}
+            <ul>
+                {% for label in level.defense_labels %}<li>{{ label }}</li>{% endfor %}
+            </ul>
+            {% else %}
+            <p>None.</p>
+            {% endif %}
+        </section>
+
+        <details class="hint">
+            <summary>Show hint</summary>
+            <p>{{ level.hint }}</p>
+        </details>
+
+        <section class="chat-history" aria-label="Conversation" aria-live="polite">
+            {% for msg in history %}
+            <div class="message {{ msg.role }}">
+                <strong>{{ 'You' if msg.role == 'user' else ('Defense' if msg.role == 'blocked' else 'Assistant') }}:</strong>
+                {{ msg.content }}
+            </div>
+            {% endfor %}
+        </section>
+
+        <form class="chat-form" method="POST" action="{{ url_for('level', number=level.number) }}" onsubmit="showLoading()">
+            <label for="message" class="visually-hidden">Message</label>
+            <textarea id="message" name="message" rows="3" placeholder="Type your message..." required></textarea>
+            <button type="submit">Send</button>
+        </form>
+        <div id="loading" class="loading" style="display: none;" role="status">Thinking...</div>
+
+        <section class="submit-secret" aria-labelledby="submit-title">
+            <h2 id="submit-title">Submit the secret</h2>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                <p class="flash-message {{ category }}" role="alert">{{ message }}</p>
+                {% endfor %}
+            {% endwith %}
+
+            {% if solved %}
+            <div class="success" role="status">
+                <p><strong>Level solved.</strong> <span class="flag">{{ level.flag }}</span></p>
+                <p class="story">{{ level.story }}</p>
+            </div>
+            {% else %}
+            <form class="secret-form" method="POST" action="{{ url_for('submit_secret', number=level.number) }}">
+                <label for="secret">Secret</label>
+                <input type="text" id="secret" name="secret" autocomplete="off" required>
+                <button type="submit">Check</button>
+            </form>
+            {% endif %}
+        </section>
+    </main>
+    <script>
+        function showLoading() {
+            document.getElementById("loading").style.display = "block";
+        }
+    </script>
+</body>
+</html>

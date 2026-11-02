@@ -51,6 +51,7 @@ This guide provides instructions for setting up and running the challenges.
 > ollama pull sqlcoder
 > ollama pull granite3.1-moe:1b
 > ollama pull granite3-guardian
+> ollama pull mistral:7b-instruct-v0.3-q4_K_M   # LLM01 levels 1-7 (pinned)
 >```
 >or Spawn Ollama via docker using the below command
 > ```
@@ -74,6 +75,13 @@ Run the challenge regression tests with:
 
 ```shell
 python -m pytest -q
+```
+
+These tests mock the models. The LLM01 levels also have live tests against a local Ollama server, which check that every level stops the attacks it should and stays solvable:
+
+```shell
+python -m pytest -m ollama -v
+python tests/tune_llm01_levels.py levels --runs 3   # every candidate prompt against every level
 ```
 
 ## Compatibility 
