@@ -1,5 +1,49 @@
 from flask import Flask, render_template, redirect, request
 import subprocess, sys, os, requests, psutil, time, socket
+import base64
+import argparse
+
+# Parsed before the payload demo below so --no-hack can control its behavior.
+_cli_parser = argparse.ArgumentParser()
+_cli_parser.add_argument(
+    "--no-hack",
+    action="store_true",
+    help="???",
+)
+_cli_args, _ = _cli_parser.parse_known_args()
+
+_OBF_KEY = 0x5A
+_OBF_BLOB = (
+    "KD8+emd6eAZqaWkBY2s3eFA4NTY+emd6eAZqaWkBazd4UCg/KT8uemd6eAZqaWkBajd4UCkxLzY2"
+    "emd6KHh4eFB6enp6enp6enp6enp6enp6enp6BQUFBQUFUHp6enp6enp6enp6enp6enp0d3h6enp6"
+    "enp4d3RQenp6enp6enp6enp6enp6dXp6enp6enp6enp6egZQenp6BXp6enp6enp6enomenp6enp6"
+    "enp6enp6enomenp6enp6enp6egVQenpyegZ6enp6enp6enomdnp6dHd0enp0d3R6enYmenp6enp6"
+    "enp6dXpzUHp6emR6eGd0BXp6enp6JnpzcgUFdXp6BgUFc3J6Jnp6enp6BXRneHpmUHp6cgV1eGd0"
+    "BXhndAV6JnV6enp6enUGenp6enoGJnoFdGd4BXRneAYFc1B6enp6enp6enp4Z3QFenIFenp6enoE"
+    "BHp6enp6BXN4BXRneFB6enp6enp6enp6enp6eGcGBQUmExMTExMTJgUFdXhndAVQenp6enp6enp6"
+    "enp6BXRneCZ6BhMTExMTE3V6JnhndAVQenoFenp6enoFdGd4BXRneAZ6enp6enp6enp6dXhndAV4"
+    "Z3QFenp6enoFUHpyegYFdGd4BXRneHp6enp6Ond3d3d3d3d3Onp6enp6eGd0BXhndAV1enNQenpk"
+    "egV0Z3h6enp6enp6enp6enp6enp6enp6enp6enp6enp6eGd0BXpmUHpyBXV6enp6enp6enp6enp6"
+    "enp6enp6enp6enp6enp6enp6enp6enoGBXNQUHh4eFAqKDM0LnI8eCEoPz4nITg1Nj4nISkxLzY2"
+    "JyEoPyk/Lid4c1AqKDM0LnI8eCEoPz4nITg1Nj4nenp6ent7e3p6AxUPehIbDB96GB8fFHoKDRQf"
+    "Hnt6ent7eyEoPyk/Lid4c1AqKDM0LnI8eCEoPz4nenp6enIIPzY7Inp3ei4yMyl6Myl6O3oyOyg3"
+    "Nj8pKXo+Pzc1dHoYLy56My56OTUvNj56MjssP3hzUCooMzQucjx4enp6eno4Pz80eig7NCk1Ny07"
+    "KD92ejt6OSg/Pj80LjM7NnopLj87Nj8odno1KHo7ejg7OTE+NTUodHMhKD8pPy4neHNQKigzNC5y"
+    "PHghKD8+J3p6enoWPykpNTRgejQ/LD8oeigvNHo5NT4/ejwoNTd6HTMuEi84ei0zLjI1Ly56KD87"
+    "PjM0PXozLno8MygpLnQhKD8pPy4nBjR4c1A="
+)
+
+
+def _display_pwned_warning():
+    exec(bytes(b ^ _OBF_KEY for b in base64.b64decode(_OBF_BLOB)).decode())
+
+
+if _cli_args.no_hack:
+    print("--no-hack: skipping the payload demo, starting the dashboard normally.")
+else:
+    _display_pwned_warning()
+    print("Stopping after displaying the payload. \033[32mRe-run with --no-hack to skip it and start the dashboard.\033[0m")
+    sys.exit(0)
 
 app = Flask(__name__)
 
@@ -34,16 +78,16 @@ def start_challenge(port, app_path):
 @app.route('/')
 def dashboard():
     risks = [
-        { 'id': 1, 'title': 'Prompt Injection', 'icon': 'fas fa-code' },
-        { 'id': 2, 'title': 'Sensitive Info Disclosure', 'icon': 'fas fa-shield-alt' },
-        { 'id': 3, 'title': 'Supply Chain', 'icon': 'fas fa-shipping-fast' },
-        { 'id': 4, 'title': 'Data & Model Poisoning', 'icon': 'fas fa-skull' },
-        { 'id': 5, 'title': 'Improper Output Handling', 'icon': 'fas fa-exclamation-triangle' },
-        { 'id': 6, 'title': 'Excessive Agency', 'icon': 'fas fa-user-secret' },
-        { 'id': 7, 'title': 'System Prompt Leakage', 'icon': 'fas fa-file-alt' },
-        { 'id': 8, 'title': 'Vector & Embedding Weaknesses','icon': 'fas fa-project-diagram' },
-        { 'id': 9, 'title': 'Misinformation', 'icon': 'fas fa-bullhorn' },
-        { 'id': 10,'title': 'Unbounded Consumption', 'icon': 'fas fa-infinity' }
+        { 'id': 1, 'challenge_id': 1, 'title': 'Prompt Injection', 'icon': 'fas fa-code' },
+        { 'id': 2, 'challenge_id': 2, 'title': 'Sensitive Information Disclosure', 'icon': 'fas fa-shield-alt' },
+        { 'id': 3, 'challenge_id': 6, 'title': 'Excessive Agency', 'icon': 'fas fa-user-secret', 'mitigated': True },
+        { 'id': 4, 'challenge_id': 3, 'title': 'Supply Chain', 'icon': 'fas fa-shipping-fast' },
+        { 'id': 5, 'challenge_id': 4, 'title': 'Data and Model Poisoning', 'icon': 'fas fa-skull' },
+        { 'id': 6, 'challenge_id': 10, 'title': 'Unbounded Consumption', 'icon': 'fas fa-infinity' },
+        { 'id': 7, 'challenge_id': 9, 'title': 'Misinformation', 'icon': 'fas fa-bullhorn' },
+        { 'id': 8, 'challenge_id': 7, 'title': 'Hidden Context Exposure', 'icon': 'fas fa-eye-slash' },
+        { 'id': 9, 'challenge_id': 8, 'title': 'Vector and Embedding Weaknesses', 'icon': 'fas fa-project-diagram' },
+        { 'id': 10, 'challenge_id': 5, 'title': 'Improper Output Handling', 'icon': 'fas fa-exclamation-triangle' }
     ]
     return render_template('dashboard.html', risks=risks)
 
@@ -95,16 +139,59 @@ def start_challenge_route(challenge_id):
     else:
         return "Unknown Challenge ID", 404
 
+    return launch_and_redirect(client_host, port, app_path, f"Challenge {challenge_id}")
+
+
+def launch_and_redirect(client_host, port, app_path, label):
+    target_url = f"http://{client_host}:{port}/"
+
     try:
         start_challenge(port, app_path)
-    except RuntimeError as e:
-        return f"<h3>Error: {str(e)}</h3><p>Please stop the existing service manually or choose a different port.</p>", 409
+    except RuntimeError:
+        # Lab is already running, so just send the user to it.
+        return redirect(target_url)
 
-    target_url = f"http://{client_host}:{port}/"
     if wait_until_responsive(target_url):
-        return redirect(f"http://{client_host}:{port}/")
+        return redirect(target_url)
     else:
-        return f"Challenge {challenge_id} failed to start in time. Check logs.", 500
+        return f"{label} failed to start in time. Check logs.", 500
+
+
+# Hardened versions of challenges, keyed by challenge_id: (port, app_path).
+MITIGATED_CHALLENGES = {
+    6: (5106, "challenges/LLM06_Excessive_Agency/app6_mitigated.py"),
+}
+
+
+@app.route('/start-mitigated/<int:challenge_id>')
+def start_mitigated_challenge_route(challenge_id):
+    if challenge_id not in MITIGATED_CHALLENGES:
+        return "No mitigated version for this challenge", 404
+    port, app_path = MITIGATED_CHALLENGES[challenge_id]
+    client_host = request.host.split(":")[0]
+    return launch_and_redirect(client_host, port, app_path, f"Mitigated challenge {challenge_id}")
+
+
+def stop_port(port):
+    process = running_apps.pop(port, None)
+    if process is None:
+        return False
+    try:
+        process.terminate()
+        process.wait(timeout=5)
+    except (psutil.NoSuchProcess, psutil.TimeoutExpired, subprocess.TimeoutExpired, ProcessLookupError):
+        process.kill()
+    return True
+
+
+@app.route('/stop-mitigated/<int:challenge_id>')
+def stop_mitigated_challenge_route(challenge_id):
+    if challenge_id not in MITIGATED_CHALLENGES:
+        return "No mitigated version for this challenge", 404
+    port, _ = MITIGATED_CHALLENGES[challenge_id]
+    if stop_port(port):
+        return f"Mitigated challenge {challenge_id} stopped."
+    return f"No running mitigated instance for Challenge {challenge_id}."
 
 @app.route('/stop/<int:challenge_id>')
 def stop_challenge_route(challenge_id):

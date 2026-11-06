@@ -3,106 +3,91 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>OWASP LLM Top 10 Dashboard</title>
+  <title>PromptMe | OWASP GenAI and LLM Top 10</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
-  <style>
-    .tiles-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 15px;
-    }
-
-    .tile {
-      position: relative;
-      background: #f4f4f9;
-      padding: 15px;
-      border-radius: 10px;
-      text-align: center;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .running-status {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background: #4CAF50;
-      color: white;
-      padding: 2px 8px;
-      border-radius: 5px;
-      font-size: 12px;
-      display: none;
-    }
-
-    .tile h3 {
-      margin-top: 10px;
-    }
-
-    .tile-buttons {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    .tile-button {
-      padding: 8px 12px;
-      font-size: 14px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      width: 100px;
-    }
-
-    .tile-button.start {
-      background: #4CAF50;
-      color: white;
-    }
-
-    .tile-button.stop {
-      background: #F44336;
-      color: white;
-    }
-
-    .tile-button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-</style>
 </head>
 <body>
-  <h1>PromptMe</h1>
-  <h3>OWASP LLM Top 10 CTF Challenges</h3>
-  <div class="tiles-container">
-    {% for risk in risks %}
-      <div class="tile" id="tile-{{ risk.id }}">
-        <div class="running-status" id="status-{{ risk.id }}">Running</div>
-        <i class="{{ risk.icon }}" style="font-size: 36px;"></i>
-        <h3>{{ risk.title }}</h3>
-        <div class="control-buttons">
-          <button class="start" onclick="startChallenge({{ risk.id }})">Start</button>
-          <button class="stop" onclick="stopChallenge({{ risk.id }})">Stop</button>
-        </div>
+  <main class="dashboard-shell">
+    <header class="masthead">
+      <div class="brand-lockup">
+        <span class="brand-mark" aria-hidden="true"><i class="fa-solid fa-shield-halved"></i></span>
+        <span>PromptMe</span>
       </div>
-    {% endfor %}
-  </div>
+      <div class="release-tag">2026 RELEASE</div>
+    </header>
+
+    <section class="intro" aria-labelledby="page-title">
+      <p class="eyebrow">Interactive security lab</p>
+      <h1 id="page-title">OWASP GenAI and LLM<br><span>Top 10</span></h1>
+      <p class="intro-copy">Launch hands-on challenges mapped to the 2026 risk ranking.</p>
+    </section>
+
+    <section class="risk-section" aria-label="OWASP LLM Top 10 challenges">
+      <div class="section-heading">
+        <p>Ranked challenges</p>
+        <span>10 scenarios</span>
+      </div>
+      <div class="tiles-container">
+        {% for risk in risks %}
+          <article class="tile{% if risk.id == 3 %} tile--featured{% endif %}" id="tile-{{ risk.id }}">
+            <div class="tile-topline">
+              <span class="risk-number">LLM{{ '%02d'|format(risk.id) }}</span>
+              {% if risk.id == 3 %}<span class="selected-status">Selected</span>{% endif %}
+              <span class="running-status" id="status-{{ risk.id }}"><i class="fa-solid fa-circle"></i> Running</span>
+            </div>
+            <i class="risk-icon {{ risk.icon }}" aria-hidden="true"></i>
+            <h2>{{ risk.title }}</h2>
+            <div class="control-buttons">
+              <button class="start" type="button" onclick="startChallenge({{ risk.challenge_id }}, {{ risk.id }})">
+                <i class="fa-solid fa-play" aria-hidden="true"></i><span>Launch</span>
+              </button>
+              <button class="stop" type="button" aria-label="Stop LLM{{ '%02d'|format(risk.id) }}" onclick="stopChallenge({{ risk.challenge_id }}, {{ risk.id }})">
+                <i class="fa-solid fa-stop" aria-hidden="true"></i>
+              </button>
+            </div>
+            {% if risk.mitigated %}
+            <div class="control-buttons control-buttons--mitigated">
+              <button class="start-mitigated" type="button" onclick="startMitigated({{ risk.challenge_id }}, {{ risk.id }})">
+                <i class="fa-solid fa-shield-halved" aria-hidden="true"></i><span>Mitigated</span>
+              </button>
+              <button class="stop" type="button" aria-label="Stop mitigated LLM{{ '%02d'|format(risk.id) }}" onclick="stopMitigated({{ risk.challenge_id }}, {{ risk.id }})">
+                <i class="fa-solid fa-stop" aria-hidden="true"></i>
+              </button>
+            </div>
+            <span class="running-status mitigated-status" id="mitigated-status-{{ risk.id }}"><i class="fa-solid fa-circle"></i> Mitigated running</span>
+            {% endif %}
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  </main>
 
   <script>
-    function startChallenge(challengeId) {
+    function startChallenge(challengeId, riskId) {
       window.open(`/start/${challengeId}`, '_blank');
-      document.getElementById(`status-${challengeId}`).style.display = 'block';
+      document.getElementById(`status-${riskId}`).classList.add('is-running');
     }
 
-    function stopChallenge(challengeId) {
+    function stopChallenge(challengeId, riskId) {
       fetch(`/stop/${challengeId}`)
         .then(response => response.text())
         .then(alert);
 
-      document.getElementById(`status-${challengeId}`).style.display = 'none';
+      document.getElementById(`status-${riskId}`).classList.remove('is-running');
+    }
+
+    function startMitigated(challengeId, riskId) {
+      window.open(`/start-mitigated/${challengeId}`, '_blank');
+      document.getElementById(`mitigated-status-${riskId}`).classList.add('is-running');
+    }
+
+    function stopMitigated(challengeId, riskId) {
+      fetch(`/stop-mitigated/${challengeId}`)
+        .then(response => response.text())
+        .then(alert);
+
+      document.getElementById(`mitigated-status-${riskId}`).classList.remove('is-running');
     }
   </script>
 </body>
